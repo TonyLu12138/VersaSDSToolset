@@ -12,28 +12,28 @@ class BuildCommands():
         self.setup_parser()
 
     def setup_parser(self):
-        parser_build = self.subp.add_parser("build",help="Configure the components of the pacemaker cluster")
-        parser_build.add_argument('-sp',default = 'pool0')
+        parser_build = self.subp.add_parser("build", help="Configure the components of the pacemaker cluster")
+        parser_build.add_argument('-sp', default='pool0')
         parser_build.set_defaults(func=self.build_all)
 
         subp_build = parser_build.add_subparsers(dest='subargs_build')
 
-        p_ip = subp_build.add_parser('ip',help='set up ip')
+        p_ip = subp_build.add_parser('ip', help='set up ip')
         p_ip.set_defaults(func=self.build_ip)
 
-        p_hostname = subp_build.add_parser('hostname',help = 'modify hostname')
+        p_hostname = subp_build.add_parser('hostname', help='modify hostname')
         p_hostname.set_defaults(func=self.build_hostname)
 
-        p_ssh = subp_build.add_parser('ssh',help='build ssh connetc')
+        p_ssh = subp_build.add_parser('ssh', help='build ssh connetc')
         p_ssh.set_defaults(func=self.build_ssh)
 
-        p_corosync = subp_build.add_parser('corosync',help='build corosync')
+        p_corosync = subp_build.add_parser('corosync', help='build corosync')
         p_corosync.set_defaults(func=self.build_corosync)
 
-        p_pacemaker = subp_build.add_parser('pacemaker',help='build pacemaker')
+        p_pacemaker = subp_build.add_parser('pacemaker', help='build pacemaker')
         p_pacemaker.set_defaults(func=self.build_pacemaker)
 
-        p_targetcli = subp_build.add_parser('targetcli',help='build targetcli')
+        p_targetcli = subp_build.add_parser('targetcli', help='build targetcli')
         p_targetcli.set_defaults(func=self.build_targetcli)
 
         p_service = subp_build.add_parser('service', help='build service')
@@ -43,16 +43,15 @@ class BuildCommands():
         p_ra.set_defaults(func=self.build_ra)
 
         p_pool = subp_build.add_parser('pool', help='build pool')
-        p_pool.add_argument('-sp',default = 'pool0')
+        p_pool.add_argument('-sp', default='pool0')
         p_pool.set_defaults(func=self.build_pool)
 
-        p_controller = subp_build.add_parser('controller' ,help='build HA linstor-controller')
-        p_controller.add_argument('-sp',default = 'pool0')
+        p_controller = subp_build.add_parser('controller', help='build HA linstor-controller')
+        p_controller.add_argument('-sp', default='pool0')
         p_controller.set_defaults(func=self.build_controller)
 
         p_drbd_attr = subp_build.add_parser('drbdattr', help='build drbd-attr')
         p_drbd_attr.set_defaults(func=self.build_drbd_attr)
-        
 
     def build_ip(self, args):
         controller = control.PacemakerConsole()
@@ -80,20 +79,21 @@ class BuildCommands():
         print('check corosync, please wait')
         if all(controller.check_corosync()):
             print('successfully configure corosync')
+            print('set up cluster name')
+            controller.modify_cluster_name()
         else:
             print('failed to configure corosync')
             sys.exit()
 
     def build_pacemaker(self, args):
         controller = control.PacemakerConsole()
-        print('start to set up packmaker')
-        controller.packmaker_conf_change()
-        if all(controller.check_packmaker()):
-            print('successfully configure packmaker')
+        print('start to set up pacemaker')
+        controller.pacmaker_conf_change()
+        if all(controller.check_pacemaker()):
+            print('successfully configure pacemaker')
         else:
-            print('failed to configure packmaker')
+            print('failed to configure pacemaker')
             sys.exit()
-
 
     def build_targetcli(self, args):
         # conf and check targecli
@@ -119,7 +119,6 @@ class BuildCommands():
             print('failed to configure service')
             sys.exit()
 
-
     def build_ra(self, args):
         controller = control.PacemakerConsole()
         print('start to replace RA')
@@ -129,7 +128,6 @@ class BuildCommands():
         else:
             print('failed to replace RA')
             sys.exit()
-
 
     def build_pacemaker_cluster(self, args):
         print('*start*')
@@ -143,7 +141,6 @@ class BuildCommands():
         self.build_ra(args)
         print('*success*')
 
-    
     def build_pool(self, args):
         controller_lvm = control.LVMConsole()
         controller_linstor = control.LinstorConsole()
@@ -153,9 +150,11 @@ class BuildCommands():
         controller_linstor.create_conf_file()
         controller_linstor.create_nodes()
         print('创建节点成功')
-        controller_linstor.create_pools(args.sp)
+        if args.sp:
+            controller_linstor.create_pools(args.sp)
+        else:
+            controller_linstor.create_pools()
         print('*success*')
-
 
     def build_controller(self, args):
         controller = control.LinstorConsole()
@@ -171,17 +170,13 @@ class BuildCommands():
             sys.exit()
         print('*success*')
 
-
     def build_drbd_attr(self, args):
         print('*start*')
         pcm = action.Pacemaker()
         pcm.config_drbd_attr()
         print('*success*')
 
-
-
-
-    def build_all(self,args):
+    def build_all(self, args):
         controller_lvm = control.LVMConsole()
         controller_linstor = control.LinstorConsole()
 
@@ -194,11 +189,9 @@ class BuildCommands():
         controller_linstor.create_conf_file()
         controller_linstor.create_nodes()
         print('创建节点成功')
-        controller_linstor.create_pools()
+        controller_linstor.create_pools('pool0')
         print('创建存储池pool0成功')
         self.build_controller(args)
         print("3. HA Controller配置完成")
         self.build_drbd_attr(args)
         print("4. drbd-attr 配置完成")
-
-

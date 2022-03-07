@@ -835,4 +835,4 @@ class LVM():
         utils.exec_cmd(cmd, self.conn)
 
     def remove_vg(self,vg):
-        utils.exec_cmd(f"vgremove -y {vg}",self.conn)
+        return utils.exec_cmd(f"vgremove -y {vg}",self.conn)

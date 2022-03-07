@@ -12,6 +12,7 @@ class Connect():
     通过ssh连接节点，生成连接对象的列表
     """
     list_ssh = []
+
     def __new__(cls, *args, **kwargs):
         if not hasattr(cls, '_instance'):
             Connect._instance = super().__new__(cls)
@@ -27,7 +28,7 @@ class Connect():
             if local_ip == node['public_ip']:
                 self.list_ssh.append(None)
             else:
-                self.list_ssh.append(ssh.make_connect(node['public_ip'],node['port'],'root',node['root_password']))    
+                self.list_ssh.append(ssh.make_connect(node['public_ip'], node['port'], 'root', node['root_password']))
 
 
 class PacemakerConsole():
@@ -96,7 +97,7 @@ class PacemakerConsole():
         lst_cluster_status = []
         lst = []
         times = 3
-        for ssh,node in zip(self.conn.list_ssh,self.conn.cluster['node']):
+        for ssh, node in zip(self.conn.list_ssh, self.conn.cluster['node']):
             corosync = action.Corosync(ssh)
             lst_ring_status.append(corosync.check_ring_status(node))
             lst_cluster_status.append(corosync.check_corosync_status(nodes))
@@ -104,12 +105,12 @@ class PacemakerConsole():
         while not all(lst_cluster_status) and times > 0:
             time.sleep(5)
             lst_cluster_status = []
-            for ssh,node in zip(self.conn.list_ssh,self.conn.cluster['node']):
+            for ssh, node in zip(self.conn.list_ssh, self.conn.cluster['node']):
                 corosync = action.Corosync(ssh)
                 lst_cluster_status.append(corosync.check_corosync_status(nodes))
             times -= 1
 
-        for x,y in zip(lst_ring_status,lst_cluster_status):
+        for x, y in zip(lst_ring_status, lst_cluster_status):
             if x and y:
                 lst.append(True)
             else:
@@ -118,26 +119,28 @@ class PacemakerConsole():
         return lst
 
     def recover_corosync_conf(self):
+        self.modify_cluster_name("debian")
         for ssh in self.conn.list_ssh:
             corosync = action.Corosync(ssh)
             corosync.recover_conf()
             corosync.restart_corosync()
-            # pacemaker = action.Pacemaker(ssh)
-            # pacemaker.restart()
-    
-    def packmaker_conf_change(self):
-        cluster_name = self.conn.conf_file.get_cluster_name()
-        packmaker = action.Pacemaker()
-        packmaker.modify_cluster_name(cluster_name)
-        packmaker.modify_policy()
-        packmaker.modify_stickiness()
-        packmaker.modify_stonith_enabled()
 
+    def modify_cluster_name(self, name=None):
+        if not name:
+            name = self.conn.conf_file.get_cluster_name()
+        pacemaker = action.Pacemaker()
+        pacemaker.modify_cluster_name(name)
 
-    def check_packmaker(self):
+    def pacmaker_conf_change(self):
+        pacemaker = action.Pacemaker()
+        pacemaker.modify_policy()
+        pacemaker.modify_stickiness()
+        pacemaker.modify_stonith_enabled()
+
+    def check_pacemaker(self):
         # cluster_name = self.conn.cluster['cluster'] // cluster name 缺少日期，不进行判断
-        packmaker = action.Pacemaker()
-        if packmaker.check_crm_conf():
+        pacemaker = action.Pacemaker()
+        if pacemaker.check_crm_conf():
             return [True] * len(self.conn.list_ssh)
         else:
             return [False] * len(self.conn.list_ssh)
@@ -148,7 +151,6 @@ class PacemakerConsole():
             targetcli.set_auto_add_default_portal()
             targetcli.set_auto_add_mapped_luns()
             targetcli.set_auto_enable_tpgt()
-
 
     def check_targetcli(self):
         result_lst = []
@@ -167,7 +169,6 @@ class PacemakerConsole():
             executor.set_enable_pacemaker()
             executor.set_enable_corosync()
 
-
     def check_service(self):
         lst = []
         for ssh in self.conn.list_ssh:
@@ -178,7 +179,7 @@ class PacemakerConsole():
             check_result.append(executor.check_linstor_satellite())
             check_result.append(executor.check_pacemaker())
             check_result.append(executor.check_corosync())
-            if check_result == ['disable','disable','enable','enable','enable']:
+            if check_result == ['disable', 'disable', 'enable', 'enable', 'enable']:
                 lst.append(True)
             else:
                 lst.append(False)
@@ -186,7 +187,7 @@ class PacemakerConsole():
 
     def replace_ra(self):
         other_node = []
-        for ssh,node in zip(self.conn.list_ssh,self.conn.cluster['node']):
+        for ssh, node in zip(self.conn.list_ssh, self.conn.cluster['node']):
             executor = action.RA(ssh)
             lst = []
             lst.append(executor.backup_iscsilogicalunit())
@@ -219,7 +220,8 @@ class PacemakerConsole():
         lst_set = []
         for ssh, node in zip(self.conn.list_ssh, self.conn.cluster['node']):
             ip_service = action.IpService(ssh)
-            lst_set.append(ip_service.set_ip(node['private_ip']['device'], node['private_ip']['ip'], node['private_ip']['gateway']))
+            lst_set.append(ip_service.set_ip(node['private_ip']['device'], node['private_ip']['ip'],
+                                             node['private_ip']['gateway']))
         self.up_ip_service()
         print("Finish to set ip")
 
@@ -227,7 +229,8 @@ class PacemakerConsole():
         lst_modify = []
         for ssh, node in zip(self.conn.list_ssh, self.conn.cluster['node']):
             ip_service = action.IpService(ssh)
-            lst_modify.append(ip_service.modify_ip(node['private_ip']['device'], node['private_ip']['ip'], node['private_ip']['gateway']))
+            lst_modify.append(ip_service.modify_ip(node['private_ip']['device'], node['private_ip']['ip'],
+                                                   node['private_ip']['gateway']))
         self.up_ip_service()
         print("Finish to modify ip")
 
@@ -237,7 +240,7 @@ class PacemakerConsole():
             ip_service = action.IpService(ssh)
             lst_up.append(ip_service.up_ip_service(node['private_ip']['device']))
 
-    def clear_crm_res(self,node):
+    def clear_crm_res(self, node=None):
         if node:
             for ssh, n in zip(self.conn.list_ssh, self.conn.cluster['node']):
                 if node == n['hostname']:
@@ -245,7 +248,6 @@ class PacemakerConsole():
         else:
             pacemaker = action.Pacemaker()
         pacemaker.clear_crm_res()
-       
 
     def clear_crm_node(self):
         for ssh, local_node in zip(self.conn.list_ssh, self.conn.cluster['node']):
@@ -255,10 +257,8 @@ class PacemakerConsole():
             for node in self.conn.cluster['node']:
                 if local_node['hostname'] != node['hostname']:
                     pacemaker.clear_crm_node(node['hostname'])
-            
 
 
-    
 class LinstorConsole():
     def __init__(self):
         self.conn = Connect()
@@ -275,7 +275,7 @@ class LinstorConsole():
     def create_nodes(self):
         for ssh, node in zip(self.conn.list_ssh, self.conn.cluster['node']):
             linstor = action.Linstor(ssh)
-            linstor.create_node(node['hostname'],node['public_ip'])
+            linstor.create_node(node['hostname'], node['public_ip'])
 
     def create_pools(self, sp):
         # 待测试 以及确定thinlv创建时用到的lvm资源的格式。
@@ -283,9 +283,9 @@ class LinstorConsole():
             linstor = action.Linstor(ssh)
             vol = node['lvm_device'].split("/")
             if len(vol) == 1:
-                linstor.create_lvm_sp(node['hostname'],node['lvm_device'],sp)
+                linstor.create_lvm_sp(node['hostname'], node['lvm_device'], sp)
             elif len(vol) == 2:
-                linstor.create_lvmthin_sp(node['hostname'],node['lvm_device'],sp)
+                linstor.create_lvmthin_sp(node['hostname'], node['lvm_device'], sp)
 
     # HA controller配置
     def build_ha_controller(self, sp):
@@ -296,7 +296,7 @@ class LinstorConsole():
             sys.exit()
 
         node_list = [node['hostname'] for node in self.conn.cluster['node']]
-        if not ha.pool_is_exist(node_list,sp):
+        if not ha.pool_is_exist(node_list, sp):
             print(f'storage-pool：{sp} does not exist')
             sys.exit()
 
@@ -304,25 +304,22 @@ class LinstorConsole():
         ha.create_vd('linstordb', '250M')
 
         for node in self.conn.cluster['node']:
-            ha.create_res('linstordb',node['hostname'], sp)
-                
+            ha.create_res('linstordb', node['hostname'], sp)
 
         for ssh in self.conn.list_ssh:
             ha = action.HALinstorController(ssh)
             if ha.is_active_controller():
                 ha.stop_controller()
-                ha.backup_linstor(backup_path) # 要放置备份文件的路径（文件夹）
+                ha.backup_linstor(backup_path)  # 要放置备份文件的路径（文件夹）
                 ha.move_database(backup_path)
                 ha.add_linstordb_to_pacemaker(len(self.conn.cluster['node']))
             ha.modify_satellite_service()  # linstor satellite systemd 配置
-        
 
-
-    def check_ha_controller(self,timeout=30):
+    def check_ha_controller(self, timeout=30):
         ha = action.HALinstorController()
         node_list = [node['hostname'] for node in self.conn.cluster['node']]
         t_beginning = time.time()
-                
+
         while True:
             if ha.check_linstor_controller(node_list):
                 break
@@ -339,14 +336,13 @@ class LinstorConsole():
                 print('LINSTOR Satellite Service is not "enable".')
                 return False
             if not ha.check_satellite_settings():
-                print("File linstor-satellite.service modification failed" )
+                print("File linstor-satellite.service modification failed")
                 return False
 
         return True
 
-
-    def backup_linstordb(self,timeout=30):
-        linstordb_path = 'ls -l /var/lib/linstor'
+    def backup_linstordb(self, timeout=30):
+        linstordb_path = '/var/lib/linstor'
         if self.conn.cluster['backup_path'].endswith('/'):
             backup_path = f"{self.conn.cluster['backup_path']}backup_{time.strftime('%Y%m%d%H%M')}"
         else:
@@ -366,20 +362,20 @@ class LinstorConsole():
                 return False
             time.sleep(1)
 
-
-    def destroy_linstordb(self):
-        ha = action.HALinstorController()
-        if not ha.linstor_is_conn():
-            print('LINSTOR connection refused')
-            sys.exit()
-
-        for ssh in self.conn.list_ssh:
-            ha = action.HALinstorController(ssh)
-            list_lv = ha.get_linstordb_lv()
-            ha.umount_lv(list_lv)
-            ha.secondary_drbd('linstordb')
-            ha.delete_rd('linstordb') # 一般只需在一个节点上执行一次
-            ha.remove_lv(list_lv)
+    # TODO Unused function
+    # def destroy_linstordb(self):
+    #     ha = action.HALinstorController()
+    #     if not ha.linstor_is_conn():
+    #         print('LINSTOR connection refused')
+    #         sys.exit()
+    #
+    #     for ssh in self.conn.list_ssh:
+    #         ha = action.HALinstorController(ssh)
+    #         list_lv = ha.get_linstordb_lv()
+    #         ha.umount_lv(list_lv)
+    #         ha.secondary_drbd('linstordb')
+    #         ha.delete_rd('linstordb') # 一般只需在一个节点上执行一次
+    #         ha.remove_lv(list_lv)
 
     def clear_linstor_conf(self):
         for ssh in self.conn.list_ssh:
@@ -393,11 +389,7 @@ class LinstorConsole():
 
         handler = action.Linstor()
         handler.restart_controller()
-        
-        
 
-
-            
 
 class VersaSDSSoftConsole():
     def __init__(self):
@@ -408,7 +400,6 @@ class VersaSDSSoftConsole():
             handler = action.DRBD(ssh)
             handler.apt_update()
 
-
     def install_spc(self):
         result_lst = []
         for ssh in self.conn.list_ssh:
@@ -416,12 +407,10 @@ class VersaSDSSoftConsole():
             result_lst.append(handler.install_spc())
         return result_lst
 
-
     def install_drbd(self):
         for ssh in self.conn.list_ssh:
             handler = action.DRBD(ssh)
             handler.install_drbd()
-
 
     def uninstall_drbd(self):
         result_lst = []
@@ -430,7 +419,6 @@ class VersaSDSSoftConsole():
             handler.uninstall()
             result_lst.append(handler.uninstall())
         return result_lst
-
 
     def install_linstor(self):
         for ssh in self.conn.list_ssh:
@@ -442,7 +430,6 @@ class VersaSDSSoftConsole():
             handler = action.Linstor(ssh)
             handler.uninstall()
 
-
     def install_lvm2(self):
         for ssh in self.conn.list_ssh:
             handler = action.LVM(ssh)
@@ -451,7 +438,7 @@ class VersaSDSSoftConsole():
     def uninstall_lvm2(self):
         for ssh in self.conn.list_ssh:
             handler = action.LVM(ssh)
-            handler.uninstall() 
+            handler.uninstall()
 
     def install_pacemaker(self):
         for ssh in self.conn.list_ssh:
@@ -463,18 +450,15 @@ class VersaSDSSoftConsole():
             handler = action.Pacemaker(ssh)
             handler.uninstall()
 
-
     def install_targetcli(self):
         for ssh in self.conn.list_ssh:
             handler = action.TargetCLI(ssh)
             handler.install()
 
-
     def uninstall_targetcli(self):
         for ssh in self.conn.list_ssh:
             handler = action.TargetCLI(ssh)
             handler.uninstall()
-
 
     def get_all_service_status(self):
         result = []
@@ -488,11 +472,10 @@ class VersaSDSSoftConsole():
             result.append(service.check_drbd())
             result.append(service.check_linstor_controller())
 
-        for i in range(0,len(result),6):
-            yield result[i:i+6]
+        for i in range(0, len(result), 6):
+            yield result[i:i + 6]
 
-
-    def get_version(self,*args):
+    def get_version(self, *args):
         """
         参数输入要获取版本信息的软件，支持sysos，syskernel，drbd，linstor，targetcli，pacemaker，corosync
         返回数据的顺序与参数顺序一致
@@ -524,8 +507,8 @@ class VersaSDSSoftConsole():
                     corosync = action.Corosync(ssh)
                     result.append(corosync.get_version())
 
-        for i in range(0,len(result),len(args)+1):
-            yield result[i:i+len(args)+1]
+        for i in range(0, len(result), len(args) + 1):
+            yield result[i:i + len(args) + 1]
 
 
 class LVMConsole():
@@ -537,7 +520,7 @@ class LVMConsole():
         for ssh, node in zip(self.conn.list_ssh, self.conn.cluster['node']):
             lvm = action.LVM(ssh)
             pv_list.append(lvm.pv_create(node['pool_disk']))
-        for r,node in zip(pv_list,self.conn.cluster['node']):
+        for r, node in zip(pv_list, self.conn.cluster['node']):
             if not r:
                 print(f"{node['pool_disk']} is not on {node['hostname']} or it has been used")
                 sys.exit()
@@ -547,19 +530,17 @@ class LVMConsole():
             vol = node['lvm_device'].split("/")
             if len(vol) == 1:
                 vg = vol[0]
-                lvm.vg_create(vg,node['pool_disk'])
+                lvm.vg_create(vg, node['pool_disk'])
             elif len(vol) == 2:
-                vg,lv = vol
-                lvm.vg_create(vg,node['pool_disk'])
-                lvm.thinpool_create(vg,lv)
+                vg, lv = vol
+                lvm.vg_create(vg, node['pool_disk'])
+                lvm.thinpool_create(vg, lv)
 
-    
     def remove_vg(self):
         for ssh, node in zip(self.conn.list_ssh, self.conn.cluster['node']):
             lvm = action.LVM(ssh)
             vol = node['lvm_device'].split("/")
             vg = vol[0]
-            lvm.remove_vg(vg)
-
-
-
+            result = lvm.remove_vg(vg)
+            if result:
+                print(result)
