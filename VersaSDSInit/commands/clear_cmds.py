@@ -22,7 +22,7 @@ class ClearCommands():
         p_vg.set_defaults(func=self.clear_vg)
 
         p_corosync = subp_clear.add_parser('corosync', help='restore default configuration of corosync')
-        p_corosync.set_defaults(func=self.clear_corosync)
+        p_corosync.set_defaults(func=self.clear_corosync_node_conf)
 
         # TODO remove args
         # p_linstordb = subp_clear.add_parser('linstordb', aliases=['ldb'], help='clear linstordb')
@@ -33,7 +33,14 @@ class ClearCommands():
     def clear_crm(self, args):
         sc = control.PacemakerConsole()
         print('清除 crm 集群的相关资源')
-        sc.clear_crm_res(args.node)
+        if args.subargs_clear:
+            sc.clear_crm_res(args.node)
+        else:
+            sc.clear_crm_res()
+
+    def clear_corosync_node_conf(self, args):
+        self.clear_corosync(args)
+        self.clear_crm_node(args)
 
     def clear_crm_node(self, args):
         sc = control.PacemakerConsole()
@@ -52,10 +59,9 @@ class ClearCommands():
     #     controller.destroy_linstordb()
 
     def clear_corosync(self, args):
-        print("ss")
-        # sc = control.PacemakerConsole()
-        # print('恢复 corosync 配置文件')
-        # sc.recover_corosync_conf()
+        sc = control.PacemakerConsole()
+        print('恢复 corosync 配置文件')
+        sc.recover_corosync_conf()
 
     def restart_linstor(self, args):
         sc = control.LinstorConsole()
@@ -66,7 +72,6 @@ class ClearCommands():
         print('*start*')
         self.clear_crm(args)
         self.clear_vg(args)
-        self.clear_corosync(args)
-        self.clear_crm_node(args)
+        self.clear_corosync_node_conf(args)
         self.restart_linstor(args)
         print('*success*')

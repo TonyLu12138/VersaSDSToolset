@@ -8,7 +8,7 @@ sys.path.append('../')
 import consts
 
 
-class AutomatedTesting():
+class AutomatedTesting(object):
     def __init__(self):
         self.parser = argparse.ArgumentParser(prog='main')
         self.setup_parser()

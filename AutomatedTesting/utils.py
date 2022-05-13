@@ -220,12 +220,12 @@ def get_host_ip():
     return ip
 
 
-def re_search(re_string, tgt_string, output_type='bool'):
+def re_search(conn, re_string, tgt_string, output_type='bool'):
     logger = get_logger()
     oprt_id = log.create_oprt_id()
     re_obj = re.compile(re_string)
     re_result = re_obj.search(tgt_string)
-    logger.write_to_log(None, 'OPRT', 'REGULAR', 're_search', oprt_id, {'re': re_string, 'string': tgt_string})
+    logger.write_to_log(conn, 'OPRT', 'REGULAR', 're_search', oprt_id, {'re': re_string, 'string': tgt_string})
     if re_result:
         if output_type == 'bool':
             re_result = True
@@ -233,17 +233,17 @@ def re_search(re_string, tgt_string, output_type='bool'):
             re_result = re_result.groups()
         if output_type == 'group':
             re_result = re_result.group()
-    logger.write_to_log(None, 'DATA', 'REGULAR', 're_search', oprt_id, re_result)
+    logger.write_to_log(conn, 'DATA', 'REGULAR', 're_search', oprt_id, re_result)
     return re_result
 
 
-def re_findall(re_string, tgt_string):
+def re_findall(conn, re_string, tgt_string):
     logger = get_logger()
     oprt_id = log.create_oprt_id()
     re_obj = re.compile(re_string)
-    logger.write_to_log(None, 'OPRT', 'REGULAR', 're_findall', oprt_id, {'re': re_string, 'string': tgt_string})
+    logger.write_to_log(conn, 'OPRT', 'REGULAR', 're_findall', oprt_id, {'re': re_string, 'string': tgt_string})
     re_result = re_obj.findall(tgt_string)
-    logger.write_to_log(None, 'DATA', 'REGULAR', 're_findall', oprt_id, re_result)
+    logger.write_to_log(conn, 'DATA', 'REGULAR', 're_findall', oprt_id, re_result)
     return re_result
 
 
