@@ -1,0 +1,9 @@
+bond:
+  - node: <Node for SSH connect >
+    password: <Password>
+    bond: <Bond name>
+    mode: <Bond mode>
+    ip: <IP address>
+    device:
+      - <Device name 1>
+      - <Device name 2>

@@ -2,7 +2,7 @@ import control
 import utils
 
 
-class CheckCommands():
+class CheckCommands(object):
     def __init__(self, sub_parser):
         self.subp = sub_parser
         self.setup_parser()
@@ -15,10 +15,9 @@ class CheckCommands():
         )
         parser_check.set_defaults(func=self.check_version)
 
-
-    def check_version(self,args):
+    def check_version(self, args):
         controller = control.VersaSDSSoftConsole()
-        iter_version = controller.get_version('drbd','linstor','targetcli','pacemaker','corosync')
+        iter_version = controller.get_version('drbd', 'linstor', 'targetcli', 'pacemaker', 'corosync')
 
         dict_all = {'node': [], 'drbd': [], 'linstor': [], 'targetcli': [], 'pacemaker': [], 'corosync': []}
         for i in iter_version:
@@ -41,7 +40,7 @@ class CheckCommands():
         flag.pop(0)
 
         table_soft_check = utils.Table()
-        table_soft_check.header = ['software','result']
+        table_soft_check.header = ['software', 'result']
         for i in flag:
             table_soft_check.add_data(i)
 

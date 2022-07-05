@@ -1,6 +1,5 @@
 import argparse
 import sys
-import os
 
 sys.path.append('../')
 import consts
@@ -16,11 +15,10 @@ from commands import (
 )
 
 
-
-class VersaSDSTools():
+class VersaSDSTools(object):
     def __init__(self):
         self.parser = argparse.ArgumentParser(prog='main')
-        self.subp = self.parser.add_subparsers(metavar='',dest='subargs_vtel')
+        self.subp = self.parser.add_subparsers(metavar='', dest='subargs_init')
         self._check_cmds = CheckCommands(self.subp)
         self._install_cmds = InstallCommands(self.subp)
         self._build_cmds = BuildCommands(self.subp)
@@ -53,9 +51,9 @@ class VersaSDSTools():
 
 
 def main():
-    if os.geteuid() != 0:
-        print('This program must be run as root. Aborting.')
-        sys.exit()
+    # if os.geteuid() != 0:
+    #     print('This program must be run as root. Aborting.')
+    #     sys.exit()
     try:
         cmd = VersaSDSTools()
         cmd.parse()
@@ -65,7 +63,5 @@ def main():
         sys.stderr.write("\nPermission denied (log file or other)\n")
 
 
-
-if __name__  == '__main__':
+if __name__ == '__main__':
     main()
-

@@ -5,4 +5,3 @@ from .backup_cmds import BackupCommands
 from .show_cmds import ShowCommands
 from .clear_cmds import ClearCommands
 from .uninstall_cmds import UninstallCommands
-

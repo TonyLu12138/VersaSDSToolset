@@ -5,6 +5,22 @@ import subprocess
 import yaml
 import sys
 import re
+import socket
+
+
+def get_host_ip():
+    """
+    查询本机ip地址
+    :return: ip
+    """
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(('8.8.8.8', 80))
+        ip = s.getsockname()[0]
+    finally:
+        s.close()
+
+    return ip
 
 
 def exec_cmd(cmd, conn=None):
@@ -72,7 +88,7 @@ class SSHConn(object):
     def ssh_connect(self):
         self._connect()
         if not self.SSHConnection:
-            print(f'Connect retry for {self._host}')
+            print(f'Connect retry for {self._host} ...')
             self._connect()
             if not self.SSHConnection:
                 sys.exit()
@@ -90,17 +106,17 @@ class SSHConn(object):
                 return {"st": True, "rt": data}
 
 
-def get_hostname():
-    """
-    查询本机hostname
-    :return:
-    """
-    # local_hostname = os.popen('hostname').read()
-    local_hostname = os.popen('hostname').read().strip('\n')
-    return local_hostname
+# def get_hostname():
+#     """
+#     查询本机hostname
+#     :return:
+#     """
+#     # local_hostname = os.popen('hostname').read()
+#     local_hostname = os.popen('hostname').read().strip('\n')
+#     return local_hostname
 
 
-class ConfFile():
+class ConfFile(object):
     def __init__(self, file):
         self.yaml_file = file
         self.config = self.read_yaml()
@@ -118,19 +134,20 @@ class ConfFile():
             print("Error in the type of file name.")
             sys.exit()
 
-    def update_yaml(self):
-        """更新文件内容"""
-        with open(self.yaml_file, 'w', encoding='utf-8') as f:
-            yaml.dump(self.cluster, f, default_flow_style=False)
+    # def update_yaml(self):
+    #     """更新文件内容"""
+    #     with open(self.yaml_file, 'w', encoding='utf-8') as f:
+    #         yaml.dump(self.cluster, f, default_flow_style=False)
 
     def get_config(self):
-        lst = []
-        for host_config in self.config["node"]:
-            if check_mode(host_config['mode']) and check_ip(host_config['ip']):
-                lst.append(
-                    [host_config['hostname'], host_config['bond'], host_config['mode'], host_config['device'],
-                     host_config['ip']])
-            else:
-                print(f"Please check the config of {host_config['hostname']}")
+        for host_config in self.config["bond"]:
+            if not check_mode(host_config['mode']):
+                print(f"Please check the mode config of {host_config['node']}")
                 sys.exit()
-        return lst
+            if not check_ip(host_config['ip']):
+                print(f"Please check the ip config of {host_config['node']}")
+                sys.exit()
+            if len(host_config["device"]) != 2:
+                print(f"Please check the ip config of {host_config['node']}. Number of bond devices must be 2")
+                sys.exit()
+        return self.config["bond"]

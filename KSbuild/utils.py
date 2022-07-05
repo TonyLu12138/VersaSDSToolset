@@ -1,3 +1,5 @@
+import sys
+
 import paramiko
 import yaml
 import socket
@@ -6,6 +8,7 @@ import subprocess
 import time
 import prettytable
 import logging
+
 
 class SSHConn(object):
 
@@ -30,16 +33,17 @@ class SSHConn(object):
             # objSSHClient.exec_command("\x003")
             self.SSHConnection = objSSHClient
         except:
-            pass
-
+            print(f'Failed to connect host {self._host}')
 
     def ssh_connect(self):
         self._connect()
         if not self.SSHConnection:
-            print('Connect retry for SAN switch "%s" ...' % self._host)
+            print(f'Connect retry for host {self._host}')
             self._connect()
+            if not self.SSHConnection:
+                sys.exit()
 
-    def exec_cmd(self,command):
+    def exec_cmd(self, command):
         if self.SSHConnection:
             stdin, stdout, stderr = self.SSHConnection.exec_command(command)
             data = stdout.read()
@@ -54,27 +58,24 @@ class SSHConn(object):
             # "{}"'''.format(command, self._host, err.strip()))
 
 
-class FileEdit():
-    def __init__(self,path):
+class FileEdit(object):
+    def __init__(self, path):
         self.path = path
         self.data = self.read_file()
 
-
     def read_file(self):
         with open(self.path) as f:
-             data = f.read()
+            data = f.read()
         return data
 
-
-    def replace_data(self,old,new):
+    def replace_data(self, old, new):
         if not old in self.data:
             print('The content does not exist')
             return
-        self.data = self.data.replace(old,new)
+        self.data = self.data.replace(old, new)
         return self.data
 
-
-    def insert_data(self,content,anchor=None,type=None):
+    def insert_data(self, content, anchor=None, type=None):
         """
         在定位字符串anchor的上面或者下面插入数据，上面和下面由type决定（under/above）
         anchor可以是多行数据，但必须完整
@@ -97,7 +98,7 @@ class FileEdit():
             for n in range(len(list_data)):
                 match_num = 0
                 for m in range(len_anchor):
-                    if not list_anchor[m] == list_data[n+m]:
+                    if not list_anchor[m] == list_data[n + m]:
                         break
                     match_num += 1
 
@@ -108,8 +109,6 @@ class FileEdit():
                         pos = n
                     break
 
-
-
         lst.extend(list_data[:pos])
         lst.extend(list_add)
         lst.extend(list_data[pos:])
@@ -117,9 +116,8 @@ class FileEdit():
 
         return self.data
 
-
     @staticmethod
-    def add_data_to_head(text,data_add):
+    def add_data_to_head(text, data_add):
         text_list = text.splitlines()
         for i in range(len(text_list)):
             if text_list[i] != '\n':
@@ -136,15 +134,12 @@ class FileEdit():
         return ('\n'.join(text_list))
 
 
-
-
-
-class ConfFile():
+class ConfFile(object):
     def __init__(self):
         self.data = self.read_yaml()
         self.master_list = self.data['KubeKey']['master']
 
-    def read_yaml(self,filename='./config.yaml'):
+    def read_yaml(self, filename='./config.yaml'):
         """读YAML文件"""
         try:
             with open(filename, 'r', encoding='utf-8') as f:
@@ -164,14 +159,22 @@ class ConfFile():
         ssh_list = []
         for host in self.data['host']:
             if host['name'] in self.master_list:
-                ssh_list.append([host['address'],22,'root',host['root_password']])
+                ssh_list.append([host['address'], 22, 'root', host['root_password']])
         return ssh_list
 
     def get_worker_ssh_data(self):
         ssh_list = []
         for host in self.data['host']:
             if not host['name'] in self.master_list:
-                ssh_list.append([host['address'],22,'root',host['root_password']])
+                ssh_list.append([host['address'], 22, 'root', host['root_password']])
+        return ssh_list
+
+    def get_linstor_ssh_data(self):
+        ssh_list = []
+        ssh_list.append(self.data["VersaSDS"]["node"]["ip"])
+        ssh_list.append(22)
+        ssh_list.append('root')
+        ssh_list.append(self.data["VersaSDS"]["node"]["root_password"])
         return ssh_list
 
     def get_kk_hosts(self):
@@ -179,8 +182,9 @@ class ConfFile():
         str_all = ""
         for host in hosts:
             host.pop("root_password")
-            str_host = "  - {name: %s, address: %s, internalAddress: %s, user: %s, password: %s}\n"%(host["name"],host["address"],host["internalAddress"],host["user"],host["password"])
-            str_all+=str_host
+            str_host = "  - {name: %s, address: %s, internalAddress: %s, user: %s, password: %s}\n" % (
+                host["name"], host["address"], host["internalAddress"], host["user"], host["password"])
+            str_all += str_host
         return str_all
 
     def get_kk_etcd(self):
@@ -188,7 +192,7 @@ class ConfFile():
         str_all = ""
         for etcd in etcds:
             str_etcd = f"    - {etcd}\n"
-            str_all+=str_etcd
+            str_all += str_etcd
         return str_all
 
     def get_kk_masters(self):
@@ -196,7 +200,7 @@ class ConfFile():
         str_all = ""
         for master in masters:
             str_master = f"    - {master}\n"
-            str_all+=str_master
+            str_all += str_master
         return str_all
 
     def get_kk_worker(self):
@@ -206,7 +210,7 @@ class ConfFile():
         str_all = ""
         for worker in workers:
             str_worker = f"    - {worker}\n"
-            str_all+=str_worker
+            str_all += str_worker
         return str_all
 
     def get_kk_vip(self):
@@ -216,9 +220,7 @@ class ConfFile():
     def get_kk_port(self):
         return self.data['KubeKey']['port']
 
-
-
-    def get_ip(self,hostname):
+    def get_ip(self, hostname):
         for host in self.data['host']:
             if host['name'] == hostname:
                 return host['address']
@@ -230,16 +232,15 @@ class Table():
         self.data = None
         self.table = prettytable.PrettyTable()
 
-    def add_data(self,list_data):
+    def add_data(self, list_data):
         self.table.add_row(list_data)
 
-    def add_column(self,fieldname,list_column):
-        self.table.add_column(fieldname,list_column)
+    def add_column(self, fieldname, list_column):
+        self.table.add_column(fieldname, list_column)
 
     def print_table(self):
         self.table.field_names = self.header
         print(self.table)
-
 
 
 def get_host_ip():
@@ -257,7 +258,6 @@ def get_host_ip():
     return ip
 
 
-
 def get_hostname():
     """
     查询本机hostname
@@ -268,13 +268,12 @@ def get_hostname():
     return local_hostname
 
 
-
-def exec_cmd(cmd,conn=None):
+def exec_cmd(cmd, conn=None):
     if conn:
         result = conn.exec_cmd(cmd)
     else:
         result = subprocess.getoutput(cmd)
-    result = result.decode() if isinstance(result,bytes) else result
+    result = result.decode() if isinstance(result, bytes) else result
     log_data = f'{conn._host if conn else "localhost"} - {cmd} - \n{result}'
     Log().logger.info(log_data)
     if result:
@@ -283,25 +282,24 @@ def exec_cmd(cmd,conn=None):
 
 
 def exec_cmd_realtime(cmd):
-  process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-  while process.poll() is None:
-    line = process.stdout.readline()
-    line = line.strip()
-    if line:
-      print(line.decode())
+    process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    while process.poll() is None:
+        line = process.stdout.readline()
+        line = line.strip()
+        if line:
+            print(line.decode())
 
 
-def run_timeout(flag,run,timeout=30):
+def run_timeout(flag, run, timeout=30):
     t_beginning = time.time()
     while True:
         run()
         if flag:
-           break
+            break
         time.sleep(1)
         seconds_passed = time.time() - t_beginning
         if timeout and seconds_passed > timeout:
             raise TimeoutError()
-
 
 
 class Log():
@@ -318,7 +316,7 @@ class Log():
 
     @staticmethod
     def set_handler(logger):
-        fh = logging.FileHandler('./KSbuild.log', mode='a')
+        fh = logging.FileHandler('KSbuild.log', mode='a')
         fh.setLevel(logging.DEBUG)  # 输出到file的log等级的开关
         formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
         fh.setFormatter(formatter)

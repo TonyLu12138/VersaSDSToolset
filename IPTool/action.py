@@ -3,23 +3,19 @@ import utils
 
 
 class IpService(object):
-    def __init__(self, node):
-        if node == utils.get_hostname() or node is None:
-            self.conn = None
-        else:
-            self.conn = utils.SSHConn(node)
+    def __init__(self, conn=None):
+        self.conn = conn
 
     def set_ip(self, device, ip, gateway, netmask=24):
         connection_name = f'vtel_{device}'
-        cmd = f"nmcli connection add con-name {connection_name} type ethernet ifname {device} ipv4.addresses {ip}/{netmask} ipv4.gateway {gateway} ipv4.dns 114.114.114.114 ipv4.method manual"
+        cmd = f"nmcli connection add con-name {connection_name} type ethernet ifname {device} ipv4.addresses {ip}/{netmask} ipv4.gateway {gateway} ipv4.dns '114.114.114.114 8.8.8.8' ipv4.method manual ipv6.method ignore"
         result = utils.exec_cmd(cmd, self.conn)
         if result:
             if result["st"]:
                 return True
-        return False
 
-    def get_mode(self, bonding_name):
-        cmd = f"cat /proc/net/bonding/{bonding_name} | grep Bonding"
+    def get_mode_detail(self, bonding_name):
+        cmd = f"cat /proc/net/bonding/{bonding_name}"
         result = utils.exec_cmd(cmd, self.conn)
         return result["rt"]
 
@@ -28,16 +24,24 @@ class IpService(object):
         result = utils.exec_cmd(cmd, self.conn)
         if result:
             if result["st"]:
-                print(f"Success in up {connection_name}.")
+                print(f" Success in up {connection_name}.")
                 return True
             else:
-                print(f"Failed to up {connection_name}.")
+                print(f" Failed to up {connection_name}.")
         return False
 
-    def modify_ip(self, device, new_ip, gateway, netmask=24):
+    def modify_normal_ip(self, device, new_ip, gateway, netmask=24):
         connection_name = f'vtel_{device}'
-        cmd = f"nmcli connection modify {connection_name} ipv4.address {new_ip}/{netmask} ipv4.dns 114.114.114.114 ipv4.gateway {gateway} ipv4.method manual"
-        print(cmd)
+        cmd = f"nmcli connection modify {connection_name} ipv4.address {new_ip}/{netmask} ipv4.gateway {gateway}"
+        result = utils.exec_cmd(cmd, self.conn)
+        if result:
+            if result["st"]:
+                return True
+        return False
+
+    def modify_bond_ip(self, device, new_ip, netmask=24):
+        connection_name = f'vtel_{device}'
+        cmd = f"nmcli connection modify {connection_name} ipv4.address {new_ip}/{netmask} ipv4.method manual ipv6.method ignore"
         result = utils.exec_cmd(cmd, self.conn)
         if result:
             if result["st"]:
@@ -93,7 +97,6 @@ class IpService(object):
         if result:
             if result["st"]:
                 return True
-        return False
 
     def down_connect(self, connection_name):
         cmd = f"nmcli connection down {connection_name}"
@@ -103,8 +106,8 @@ class IpService(object):
                 return True
         return False
 
-    def del_connect(self, connection_name):
-        cmd = f"nmcli connection delete {connection_name}"
+    def del_connect(self, name):
+        cmd = f"nmcli connection delete {name}"
         result = utils.exec_cmd(cmd, self.conn)
         if result:
             if result["st"]:
@@ -118,14 +121,11 @@ class IpService(object):
         if result:
             return result["rt"]
 
-    def print_mode(self, device):
-        cmd = f"cat /proc/net/bonding/{device}"
+    def get_device_detail(self, bonding_name):
+        cmd = f"nmcli device show {bonding_name}"
         result = utils.exec_cmd(cmd, self.conn)
         if result:
-            if result["st"]:
-                # Bonding Mode: xxx
-                print(result["rt"])
-                return result["rt"]
+            return result["rt"]
 
     def get_device_status(self):
         cmd = "nmcli device status"
@@ -133,8 +133,8 @@ class IpService(object):
         if result:
             return result["rt"]
 
-    def get_bond_ip(self, bonding_name):
-        cmd = f"nmcli device show {bonding_name} | grep IP4.ADDRESS"
+    def get_bond_ethtool(self, device):
+        cmd = f"ethtool {device}"
         result = utils.exec_cmd(cmd, self.conn)
         if result:
             return result["rt"]

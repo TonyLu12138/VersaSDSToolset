@@ -1,31 +1,36 @@
 host:
-  - { name: node1, address: 10.203.1.201, internalAddress: 10.203.1.201, user: root, password: password, root_password: password }
-  - { name: node2, address: 10.203.1.202, internalAddress: 10.203.1.202, user: root, password: password, root_password: password }
+  - { name: mattie196, address: 10.203.1.196, internalAddress: 10.203.1.196, user: root, password: password, root_password: password, private_ip: 10.203.2.196 }
 
 
 HAproxy:
   server:
-    - { name: node1, port: 6443}
-    - { name: node2, port: 6443}
+    - { name: mattie196, port: 6443 }
 
 Keepalived:
   host:
-    - { name: node1, interface: ens160, priority: 100 }
-    - { name: node2, interface: ens160, priority: 80 }
+    - { name: mattie196, interface: ens160, priority: 100 }
   router_id: TEST_DEVEL
   virtual_router_id: 88
-  virtual_ipaddress: 10.203.1.203/32
+  virtual_ipaddress: 10.203.1.196/32
 
 
 # spec roleGroups master
 KubeKey:
   etcd:
-  - node1
+    - mattie196
   master:
-  - node1
-  - node2
+    - mattie196
   worker:
-  - node1
-  - node2
-  address: "10.203.1.203"
+    - mattie196
+  address: "10.203.1.196"
   port: 8443
+
+VersaSDS:
+  vip: 10.203.2.198
+  node:
+    ip: 10.203.1.185
+    root_password: password
+
+ImageVersion:
+  console: v0.1.8
+  server: v1.0.7
