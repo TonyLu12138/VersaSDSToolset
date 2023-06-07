@@ -1,10 +1,6 @@
 logfilepath: /home/logfile
 node:
-- hostname: test1
+- hostname: <hostname>
   port: 22
-  public_ip: 10.203.1.209
-  root_password: Feixi@123
-- hostname: test2
-  port: 22
-  public_ip: 10.203.1.210
-  root_password: Feixi@123
+  public_ip: <ip>
+  root_password: <password>

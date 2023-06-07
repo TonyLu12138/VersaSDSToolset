@@ -9,12 +9,13 @@ import argparse
 import os
 
 
+
 def exec_cmd(cmd, conn=None):
     if conn:
         result = conn.exec_cmd(cmd)
     else:
-        result = subprocess.getoutput(cmd)
-    result = result.decode() if isinstance(result, bytes) else result
+        result = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        result = result.stdout.decode() if isinstance(result.stdout, bytes) else result.stdout
     if result:
         result = result.rstrip('\n')
     return result
@@ -67,6 +68,7 @@ def get_path(logdir, node, soft):
 
 
 def show_tree_all(path, ssh_obj=None):
+    # TODO cmd 变量没有被定义，应该将其注释掉或者删除
     cmd = f"cd {path} && tree -L 4"
     return exec_cmd(cmd, ssh_obj)
 
@@ -91,7 +93,7 @@ def show_tree(path, node, soft=None, ssh_obj=None, depth=0):
             newitem = path + '/' + item
             if os.path.isdir(newitem):
                 show_tree(newitem, depth + 1)
-    return exec_cmd(cmd, ssh_obj)
+    # return exec_cmd(cmd, ssh_obj)
 
 
 def mkdir(path, ssh_obj=None):
@@ -128,6 +130,7 @@ class SSHConn(object):
             # objSSHClient.exec_command("\x003")
             self.SSHConnection = objSSHClient
         except:
+            # TODO 应该指定具体的异常类型以便更好地处理异常
             pass
 
     def ssh_connect(self):
