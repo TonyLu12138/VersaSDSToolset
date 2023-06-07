@@ -39,8 +39,11 @@ def exec_cmd(cmd, conn=None):
 
 
 def save_linbit_file(path, ssh_obj=None):
-    cmd = f'journalctl -u linstor-controller | cat > {path}/linstor-controller.log'
-    exec_cmd(cmd, ssh_obj)
+    cmd1 = f'journalctl -u linstor-controller | cat > {path}/linstor-controller.log'
+    cmd2 = f'journalctl -u linstor-satellite | cat > {path}/linstor-satellite.log'
+    exec_cmd(cmd1, ssh_obj)
+    exec_cmd(cmd2, ssh_obj)
+
 
 
 def save_drbd_file(path, ssh_obj=None):
@@ -49,7 +52,7 @@ def save_drbd_file(path, ssh_obj=None):
 
 
 def save_crm_file(path, ssh_obj=None):
-    cmd = f'crm_report --from "$(date -d "7 days ago" +"%Y-%m-%d %H:%M:%S")" {path}/crm.log'
+    cmd = f'crm_report --from "$(date -d "7 days ago" +"%Y-%m-%d %H:%M:%S")" --single-node {path}/crm.log'
     exec_cmd(cmd, ssh_obj)
 
 
