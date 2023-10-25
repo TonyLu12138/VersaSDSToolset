@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import paramiko
+# import paramiko
 import os
 import subprocess
 import yaml
