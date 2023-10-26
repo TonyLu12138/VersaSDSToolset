@@ -2,6 +2,7 @@
 # import paramiko
 import os
 import subprocess
+import time
 import yaml
 import sys
 import re
@@ -174,7 +175,11 @@ class Log(object):
 
     @staticmethod
     def set_handler(logger):
-        fh = logging.FileHandler('./IPToolLog.log', mode='a')
+        # 获取当前时间的字符串表示，用于构造日志文件名
+        current_time = time.strftime("%Y%m%d%H%M%S", time.localtime())
+        log_filename = f"vsdsiptool_{current_time}.log"
+        
+        fh = logging.FileHandler(log_filename, mode='a')
         fh.setLevel(logging.DEBUG)  # 输出到file的log等级的开关
         formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
         fh.setFormatter(formatter)
