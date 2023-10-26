@@ -176,7 +176,7 @@ class Log(object):
     @staticmethod
     def set_handler(logger):
         # 获取当前时间的字符串表示，用于构造日志文件名
-        current_time = time.strftime("%Y%m%d%H%M%S", time.localtime())
+        current_time = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
         log_filename = f"vsdsiptool_{current_time}.log"
         
         fh = logging.FileHandler(log_filename, mode='a')
