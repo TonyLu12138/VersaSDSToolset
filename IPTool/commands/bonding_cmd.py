@@ -102,16 +102,22 @@ class BondingCommands(object):
         bonding.configure_bonding_by_file(args.file)
 
     def create(self, args):
+        args.node = None
+        args.password = None
         conn = control.get_ssh_conn(args.node, args.password)
         bonding = control.Bonding()
         bonding.create_bonding(conn, args.bonding, args.mode, args.device, args.ip)
 
     def delete(self, args):
+        args.node = None
+        args.password = None
         conn = control.get_ssh_conn(args.node, args.password)
         bonding = control.Bonding()
         bonding.del_bonding(conn, args.bonding)
 
     def modify(self, args):
+        args.node = None
+        args.password = None
         conn = control.get_ssh_conn(args.node, args.password)
         bonding = control.Bonding()
         if args.mode:
