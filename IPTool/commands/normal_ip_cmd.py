@@ -11,16 +11,16 @@ class NormalIPCommands(object):
         subp_ip = self.parser_normal_ip.add_subparsers()
 
         parser_create = subp_ip.add_parser('create', aliases=['c'], help='Create IP')
-        parser_create.add_argument('-n',
-                                   '--node',
-                                   dest='node',
-                                   action='store',
-                                   help='Node (IP) for SSH connect')
-        parser_create.add_argument('-p',
-                                   '--password',
-                                   dest='password',
-                                   action='store',
-                                   help='Password for SSH connect')
+        # parser_create.add_argument('-n',
+        #                            '--node',
+        #                            dest='node',
+        #                            action='store',
+        #                            help='Node (IP) for SSH connect')
+        # parser_create.add_argument('-p',
+        #                            '--password',
+        #                            dest='password',
+        #                            action='store',
+        #                            help='Password for SSH connect')
         parser_create.add_argument('-d',
                                    '--device',
                                    dest='device',
@@ -36,16 +36,16 @@ class NormalIPCommands(object):
                                    help='Bonding ip')
 
         parser_delete = subp_ip.add_parser('delete', aliases=['d', 'del'], help='Delete IP')
-        parser_delete.add_argument('-n',
-                                   '--node',
-                                   dest='node',
-                                   action='store',
-                                   help='Node (IP) for SSH connect')
-        parser_delete.add_argument('-p',
-                                   '--password',
-                                   dest='password',
-                                   action='store',
-                                   help='Password for SSH connect')
+        # parser_delete.add_argument('-n',
+        #                            '--node',
+        #                            dest='node',
+        #                            action='store',
+        #                            help='Node (IP) for SSH connect')
+        # parser_delete.add_argument('-p',
+        #                            '--password',
+        #                            dest='password',
+        #                            action='store',
+        #                            help='Password for SSH connect')
         parser_delete.add_argument('-d',
                                    '--device',
                                    dest='device',
@@ -55,16 +55,16 @@ class NormalIPCommands(object):
                                    help='Device name')
 
         parser_modify = subp_ip.add_parser('modify', aliases=['m', 'mod'], help='Modify IP')
-        parser_modify.add_argument('-n',
-                                   '--node',
-                                   dest='node',
-                                   action='store',
-                                   help='Node (IP) for SSH connect')
-        parser_modify.add_argument('-p',
-                                   '--password',
-                                   dest='password',
-                                   action='store',
-                                   help='Password for SSH connect')
+        # parser_modify.add_argument('-n',
+        #                            '--node',
+        #                            dest='node',
+        #                            action='store',
+        #                            help='Node (IP) for SSH connect')
+        # parser_modify.add_argument('-p',
+        #                            '--password',
+        #                            dest='password',
+        #                            action='store',
+        #                            help='Password for SSH connect')
         parser_modify.add_argument('-ip',
                                    '--ip',
                                    dest='ip',
