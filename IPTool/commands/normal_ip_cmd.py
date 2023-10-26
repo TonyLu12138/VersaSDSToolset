@@ -85,16 +85,22 @@ class NormalIPCommands(object):
         self.parser_normal_ip.set_defaults(func=self.print_normal_help)
 
     def create(self, args):
+        args.node = None
+        args.password = None
         conn = control.get_ssh_conn(args.node, args.password)
         normal_ip = control.NormalIP()
         normal_ip.create_ip(conn, args.device, args.ip)
 
     def delete(self, args):
+        args.node = None
+        args.password = None
         conn = control.get_ssh_conn(args.node, args.password)
         normal_ip = control.NormalIP()
         normal_ip.del_ip(conn, args.device)
 
     def modify(self, args):
+        args.node = None
+        args.password = None
         conn = control.get_ssh_conn(args.node, args.password)
         normal_ip = control.NormalIP()
         normal_ip.modify_ip(conn, args.device, args.ip)
