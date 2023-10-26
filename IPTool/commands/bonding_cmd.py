@@ -14,16 +14,16 @@ class BondingCommands(object):
 
         parser_create = subp_bonding.add_parser('create', aliases=['c'], help='Create bonding')
         parser_create.add_argument('bonding', metavar='BONDING', action='store', help='Bonding name')
-        parser_create.add_argument('-n',
-                                   '--node',
-                                   dest='node',
-                                   action='store',
-                                   help='Node (IP) for SSH connect')
-        parser_create.add_argument('-p',
-                                   '--password',
-                                   dest='password',
-                                   action='store',
-                                   help='Password for SSH connect')
+        # parser_create.add_argument('-n',
+        #                            '--node',
+        #                            dest='node',
+        #                            action='store',
+        #                            help='Node (IP) for SSH connect')
+        # parser_create.add_argument('-p',
+        #                            '--password',
+        #                            dest='password',
+        #                            action='store',
+        #                            help='Password for SSH connect')
         parser_create.add_argument('-d',
                                    '--device',
                                    dest='device',
@@ -49,29 +49,29 @@ class BondingCommands(object):
 
         parser_delete = subp_bonding.add_parser('delete', aliases=['d', 'del'], help='Delete bonding')
         parser_delete.add_argument('bonding', metavar='BONDING', action='store', help='Bonding name')
-        parser_delete.add_argument('-n',
-                                   '--node',
-                                   dest='node',
-                                   action='store',
-                                   help='Node (IP) for SSH connect')
-        parser_delete.add_argument('-p',
-                                   '--password',
-                                   dest='password',
-                                   action='store',
-                                   help='Password for SSH connect')
+        # parser_delete.add_argument('-n',
+        #                            '--node',
+        #                            dest='node',
+        #                            action='store',
+        #                            help='Node (IP) for SSH connect')
+        # parser_delete.add_argument('-p',
+        #                            '--password',
+        #                            dest='password',
+        #                            action='store',
+        #                            help='Password for SSH connect')
 
         parser_modify = subp_bonding.add_parser('modify', aliases=['m', 'mod'], help='Modify bonding')
         parser_modify.add_argument('bonding', metavar='BONDING', action='store', help='Bonding name')
-        parser_modify.add_argument('-n',
-                                   '--node',
-                                   dest='node',
-                                   action='store',
-                                   help='Node (IP) for SSH connect')
-        parser_modify.add_argument('-p',
-                                   '--password',
-                                   dest='password',
-                                   action='store',
-                                   help='Password for SSH connect')
+        # parser_modify.add_argument('-n',
+        #                            '--node',
+        #                            dest='node',
+        #                            action='store',
+        #                            help='Node (IP) for SSH connect')
+        # parser_modify.add_argument('-p',
+        #                            '--password',
+        #                            dest='password',
+        #                            action='store',
+        #                            help='Password for SSH connect')
         parser_modify.add_argument('-m',
                                    '--mode',
                                    dest='mode',
