@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-import paramiko
+# import paramiko
 import os
 import subprocess
+import time
 import yaml
 import sys
 import re
@@ -68,60 +69,60 @@ def check_ip(ip):
         return False
 
 
-class SSHConn(object):
+# class SSHConn(object):  # 注释
 
-    def __init__(self, host, port=22, username=None, password=None, timeout=8):
-        self._host = host
-        self._port = port
-        self._timeout = timeout
-        self._username = username
-        self._password = password
-        self.SSHConnection = None
-        self.ssh_connect()
+#     def __init__(self, host, port=22, username=None, password=None, timeout=8):
+#         self._host = host
+#         self._port = port
+#         self._timeout = timeout
+#         self._username = username
+#         self._password = password
+#         self.SSHConnection = None
+#         self.ssh_connect()
 
-    def _connect(self):
-        try:
-            objSSHClient = paramiko.SSHClient()
-            objSSHClient.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            objSSHClient.connect(self._host, port=self._port,
-                                 username=self._username,
-                                 password=self._password,
-                                 timeout=self._timeout)
-            # time.sleep(1)
-            # objSSHClient.exec_command("\x003")
-            self.SSHConnection = objSSHClient
-        except:
-            print(f" Failed to connect {self._host}")
+#     def _connect(self):
+#         try:
+#             objSSHClient = paramiko.SSHClient()
+#             objSSHClient.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+#             objSSHClient.connect(self._host, port=self._port,
+#                                  username=self._username,
+#                                  password=self._password,
+#                                  timeout=self._timeout)
+#             # time.sleep(1)
+#             # objSSHClient.exec_command("\x003")
+#             self.SSHConnection = objSSHClient
+#         except:
+#             print(f" Failed to connect {self._host}")
 
-    def ssh_connect(self):
-        self._connect()
-        if not self.SSHConnection:
-            print(f'Connect retry for {self._host} ...')
-            self._connect()
-            if not self.SSHConnection:
-                sys.exit()
+#     def ssh_connect(self):
+#         self._connect()
+#         if not self.SSHConnection:
+#             print(f'Connect retry for {self._host} ...')
+#             self._connect()
+#             if not self.SSHConnection:
+#                 sys.exit()
 
-    def exec_cmd(self, command):
-        if self.SSHConnection:
-            stdin, stdout, stderr = self.SSHConnection.exec_command(command)
-            err = stderr.read()
-            if len(err) > 0:
-                err = err.decode() if isinstance(err, bytes) else err
-                return {"st": False, "rt": err}
-            data = stdout.read()
-            if len(data) > 0:
-                data = data.decode() if isinstance(data, bytes) else data
-                return {"st": True, "rt": data}
+#     def exec_cmd(self, command):
+#         if self.SSHConnection:
+#             stdin, stdout, stderr = self.SSHConnection.exec_command(command)
+#             err = stderr.read()
+#             if len(err) > 0:
+#                 err = err.decode() if isinstance(err, bytes) else err
+#                 return {"st": False, "rt": err}
+#             data = stdout.read()
+#             if len(data) > 0:
+#                 data = data.decode() if isinstance(data, bytes) else data
+#                 return {"st": True, "rt": data}
 
 
-# def get_hostname():
-#     """
-#     查询本机hostname
-#     :return:
-#     """
-#     # local_hostname = os.popen('hostname').read()
-#     local_hostname = os.popen('hostname').read().strip('\n')
-#     return local_hostname
+def get_hostname():
+    """
+    查询本机hostname
+    :return:
+    """
+    # local_hostname = os.popen('hostname').read()
+    local_hostname = os.popen('hostname').read().strip('\n')
+    return local_hostname
 
 
 class ConfFile(object):
@@ -174,7 +175,11 @@ class Log(object):
 
     @staticmethod
     def set_handler(logger):
-        fh = logging.FileHandler('./IPToolLog.log', mode='a')
+        # 获取当前时间的字符串表示，用于构造日志文件名
+        current_time = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
+        log_filename = f"vsdsiptool_{current_time}.log"
+        
+        fh = logging.FileHandler(log_filename, mode='a')
         fh.setLevel(logging.DEBUG)  # 输出到file的log等级的开关
         formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
         fh.setFormatter(formatter)
