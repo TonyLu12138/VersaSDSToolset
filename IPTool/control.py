@@ -128,7 +128,7 @@ class Bonding(object):
             else:
                 print(f' Failed to add bond slave about {device}')
         bonding.up_ip_service(connection_name)
-        time.sleep(2)
+        time.sleep(8)
         speed_detail = bonding.get_bond_ethtool(bonding_name)
         speed = self.get_speed(speed_detail)
         print(f"* {bonding_name} speed is {speed} .")
@@ -329,7 +329,7 @@ class NormalIP(object):
         ip_detail = normal_ip.get_device_detail(device)
         lc_ip = get_ip(ip_detail)
         if ip == lc_ip:
-            print("Same bonding IP. Do nothing.")
+            print("Same IP. Do nothing.")
         else:
             print(f"Change {device} IP, {lc_ip} -> {ip}.")
             gateway = f"{'.'.join(ip.split('.')[:3])}.1"
