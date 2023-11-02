@@ -128,7 +128,7 @@ class Bonding(object):
             else:
                 print(f' Failed to add bond slave about {device}')
         bonding.up_ip_service(connection_name)
-        time.sleep(2)
+        time.sleep(8)
         speed_detail = bonding.get_bond_ethtool(bonding_name)
         speed = self.get_speed(speed_detail)
         print(f"* {bonding_name} speed is {speed} .")
