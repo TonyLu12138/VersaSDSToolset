@@ -329,7 +329,7 @@ class NormalIP(object):
         ip_detail = normal_ip.get_device_detail(device)
         lc_ip = get_ip(ip_detail)
         if ip == lc_ip:
-            print("Same bonding IP. Do nothing.")
+            print("Same IP. Do nothing.")
         else:
             print(f"Change {device} IP, {lc_ip} -> {ip}.")
             gateway = f"{'.'.join(ip.split('.')[:3])}.1"
