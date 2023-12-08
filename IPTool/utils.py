@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # import paramiko
+import datetime
 import os
 import subprocess
 import time
@@ -162,25 +163,27 @@ class ConfFile(object):
         return self.config["bond"]
 
 class Log(object):
-    def __init__(self):
-        pass
+    _instance = None
 
     def __new__(cls, *args, **kwargs):
-        if not hasattr(cls, '_instance'):
-            Log._instance = super().__new__(cls)
-            Log._instance.logger = logging.getLogger()
-            Log._instance.logger.setLevel(logging.INFO)
-            Log.set_handler(Log._instance.logger)
-        return Log._instance
+        if not cls._instance:
+            cls._instance = super().__new__(cls)
+            cls._instance.logger = logging.getLogger()
+            cls._instance.logger.setLevel(logging.INFO)
+            cls._instance.set_handler()
+        return cls._instance
 
-    @staticmethod
-    def set_handler(logger):
-        # 获取当前时间的字符串表示，用于构造日志文件名
-        current_time = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
-        log_filename = f"vsdsiptool_{current_time}.log"
-        
-        fh = logging.FileHandler(log_filename, mode='a')
-        fh.setLevel(logging.DEBUG)  # 输出到file的log等级的开关
-        formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    def set_handler(self):
+        now_date = datetime.datetime.now().strftime('%Y-%m-%d')
+        existing_log_files = [file for file in os.listdir('.') if file.startswith(f"vsdscoroconf_{now_date}")]
+
+        if existing_log_files:
+            file_name = existing_log_files[0]
+        else:
+            file_name = f"vsdsiptool_{now_date}.log"
+
+        fh = logging.FileHandler(file_name, mode='a')
+        fh.setLevel(logging.DEBUG)
+        formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s", datefmt='%Y-%m-%d %H:%M:%S')
         fh.setFormatter(formatter)
-        logger.addHandler(fh)
+        self.logger.addHandler(fh)
