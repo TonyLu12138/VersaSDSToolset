@@ -8,16 +8,15 @@ import re
 
 def exec_cmd(cmd, conn=None):
     if conn:
-        result = conn.exec_cmd(cmd)
+        result = conn.exec_cmd(cmd, conn)
     else:
         result = subprocess.getoutput(cmd)
-    log_data = f'{conn._host if conn else "localhost"} - {cmd} - {result}'
-    Log().logger.info(log_data)
-    if result:
-        result = result.rstrip('\n')
+        log_data = f"'localhost' - {cmd} - {result}"
+        Log().logger.info(log_data)
+        if result:
+            result = result.rstrip('\n')
     return result
-
-
+    
 class SSHConn(object):
 
     def __init__(self, host, port=22, username=None, password=None, timeout=None):
@@ -28,9 +27,19 @@ class SSHConn(object):
         self._password = password
         self.SSHConnection = None
         self.ssh_connect()
+        
+    def __getitem__(self, key):
+        # 根据 key 返回相应的属性值
+        if key == 'ip':
+            return self._host
+        elif key == 'username':
+            return self._username
+        elif key == 'password':
+            return self._password
+        else:
+            raise KeyError(f"Invalid key: {key}")
 
     def _connect(self):
-        # TODO: 异常处理应该更加具体，以便更好地了解连接失败的原因
         try:
             objSSHClient = paramiko.SSHClient()
             objSSHClient.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -39,8 +48,12 @@ class SSHConn(object):
                                  password=self._password,
                                  timeout=self._timeout)
             self.SSHConnection = objSSHClient
-        except:
-            print(f" Failed to connect {self._host}")
+        except paramiko.AuthenticationException as auth_exception:
+            print(f"Authentication failed for {self._host}: {auth_exception}")
+        except paramiko.SSHException as ssh_exception:
+            print(f"SSH connection failed for {self._host}: {ssh_exception}")
+        except Exception as e:
+            print(f"Failed to connect {self._host}: {e}")
 
     def ssh_connect(self):
         self._connect()
@@ -50,41 +63,66 @@ class SSHConn(object):
             if not self.SSHConnection:
                 sys.exit()
 
-    def exec_cmd(self, command):
-        # TODO: 如果发生错误，应该返回错误消息，而不是返回False
+    def exec_cmd(self, command, conn):
         if self.SSHConnection:
-            stdin, stdout, stderr = self.SSHConnection.exec_command(command)
-            data = stdout.read()
-            if len(data) > 0:
-                data = data.decode() if isinstance(data, bytes) else data
-                return data
-            err = stderr.read()
-            if len(err) > 0:
-                err = err.decode() if isinstance(err, bytes) else err
-                return False
+            try:
+                stdin, stdout, stderr = self.SSHConnection.exec_command(command)
+                #print(f"exec_cmd stdout: {stdout}")
+                #print(f"exec_cmd stderr: {stderr}")
+                log_data = f"{conn._host} - {command} - {stdout}"
+                Log().logger.info(log_data)
+                data = stdout.read()
+
+                if len(data) >= 0:
+                    data = data.decode() if isinstance(data, bytes) else data
+                    # print(f"exec_cmd data: {data.strip()}")
+                    if data:
+                        return data.strip()
+                    else:
+                        return True
+                err = stderr.read()
+            except paramiko.SSHException as ssh_exception:
+                error_msg = f"SSH command execution failed: {ssh_exception}"
+                Log().logger.error(error_msg)
+                return error_msg
+
+            except Exception as e:
+                error_msg = f"Error occurred while executing command: {e}"
+                Log().logger.error(error_msg)
+                return error_msg
 
     def exec_copy_id_rsa_pub(self, target_ip, passwd):
-        # TODO: 应该添加更多的错误处理，以便在发生错误时能够更好地了解问题所在
-        cmd = f'ssh-copy-id -o stricthostkeychecking=no -i /root/.ssh/id_rsa.pub root@{target_ip}'
-        conn = self.SSHConnection.invoke_shell()
-        conn.keep_this = self.SSHConnection
-        print(cmd)
-        time.sleep(2)
-        conn.send(cmd + '\n')
-        time.sleep(2)
-        stdout = conn.recv(1024)
-        info = stdout.decode()
-        result = re.findall(r'Number of key(s) added: 1', info)
-        if result == []:
+        try:
+            cmd = f'ssh-copy-id -o stricthostkeychecking=no -i /root/.ssh/id_rsa.pub root@{target_ip}'
+            conn = self.SSHConnection.invoke_shell()
+            conn.keep_this = self.SSHConnection
+            print(cmd)
             time.sleep(2)
-            conn.send(passwd + '\n')
+            conn.send(cmd + '\n')
+            time.sleep(2)
+            stdout = conn.recv(1024)
+            info = stdout.decode()
+            result = re.findall(r'Number of key(s) added: 1', info)
+            if result == []:
+                time.sleep(2)
+                conn.send(passwd + '\n')
 
-        time.sleep(1)
-        stdout = conn.recv(9999)
+            time.sleep(1)
+            stdout = conn.recv(9999)
+        except paramiko.AuthenticationException as auth_exception:
+            print(f"Authentication failed: {auth_exception}")
+            Log().logger.error(f"Authentication failed: {auth_exception}")
+            return False
 
-    def ssh_close(self):
-        self.SSHConnection.close()
+        except paramiko.SSHException as ssh_exception:
+            print(f"SSH connection error: {ssh_exception}")
+            Log().logger.error(f"SSH connection error: {ssh_exception}")
+            return False
 
+        except Exception as e:
+            print(f"Error occurred: {e}")
+            Log().logger.error(f"Error occurred: {e}")
+            return False
 
 class Log(object):
     def __init__(self):
