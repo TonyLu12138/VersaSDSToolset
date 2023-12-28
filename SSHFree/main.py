@@ -28,8 +28,14 @@ class ArgparseOperator:
 
         parser_re_free = sub_parser.add_parser("re", aliases=['re'], help='re_free_login')
 
+        parser_check = sub_parser.add_parser("check", aliases=['c'], help='check_node_passwd_free')
+
+        parser_modify = sub_parser.add_parser("mod", aliases=['m'], help='modify_ssh_config_file')
+
         parser_free.set_defaults(func=self.func_free_login)
         parser_re_free.set_defaults(func=self.func_re_free_login)
+        parser_check.set_defaults(func=self.func_check_node)
+        parser_modify.set_defaults(func=self.func_modify_ssh_config)
 
     def main_usage(self, args):
         if args.version:
@@ -48,7 +54,12 @@ class ArgparseOperator:
     def func_re_free_login(self, args):
         re_free_login()
 
+    def func_check_node(self, args):
+        check_node_()
 
+    def func_modify_ssh_config(self, args):
+        modify_ssh_config_()
+        
 def free_login():
     config_info = operation.read_config('config.yaml')
     node_list = config_info['node']
@@ -80,7 +91,7 @@ def free_login():
         passwd = z['password']
         ssh_obj = utils.SSHConn(host=ipaddr, username=usname, password=passwd)
         exec(f'list{i} = {node_list}')
-        exec(f'list{i}.remove({z})')
+        # exec(f'list{i}.remove({z})')
         print(f'Now distributing public key for {ipaddr}')
         try:
             exec(f'for y in list{i}:'
@@ -108,6 +119,24 @@ def re_free_login():
             print("Password-free operation removed successfully")
         except:
             print("Failed to remove password-free operation")
+
+def check_node_():
+    config_info = operation.read_config('config.yaml')
+    node_list = config_info['node']
+    result = operation.check_node(node_list)
+    if result:
+        print("Node to node password free successful")
+    else:
+        print("Node to node password free failure")
+
+def modify_ssh_config_():
+    config_info = operation.read_config('config.yaml')
+    node_list = config_info['node']
+    result = operation.modify_ssh_config(node_list)
+    if result:
+        print("modify ssh_config successful")
+    else:
+        print("modify ssh_config failure")
 
 
 if __name__ == "__main__":
