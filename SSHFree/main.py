@@ -61,7 +61,7 @@ class ArgparseOperator:
         modify_ssh_config_()
         
 def free_login():
-    config_info = operation.read_config('config.yaml')
+    config_info = operation.read_config('vsdssshfree_config.yaml')
     node_list = config_info['node']
     # TODO: 可以使用 concurrent.futures 模块来并行执行循环中的任务，以提高效率
     for z in node_list:
