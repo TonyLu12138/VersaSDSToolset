@@ -39,9 +39,11 @@ class IpService(object):
     #             return True
     #     return False
 
-    def modify_normal_ip(self, device, new_ip, gateway, dns=None, netmask=24):
+    def modify_normal_ip(self, device, new_ip, gateway=None, dns=None, netmask=24):
         connection_name = f'vtel_{device}'
-        cmd = f"nmcli connection modify {connection_name} ipv4.address {new_ip}/{netmask} ipv4.gateway {gateway}"
+        cmd = f"nmcli connection modify {connection_name} ipv4.address {new_ip}/{netmask}"
+        if gateway is not None:
+            cmd += f" ipv4.gateway {gateway}"
         if dns is not None:
             cmd += f" ipv4.dns {dns}"
         result = utils.exec_cmd(cmd, self.conn)
