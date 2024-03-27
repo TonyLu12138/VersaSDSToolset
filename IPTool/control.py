@@ -136,7 +136,7 @@ class Bonding(object):
             else:
                 print(f' Failed to add bond slave about {device}')
         bonding.up_ip_service(connection_name)
-        time.sleep(2)
+        time.sleep(8)
         speed_detail = bonding.get_bond_ethtool(bonding_name)
         speed = self.get_speed(speed_detail)
         print(f"* {bonding_name} speed is {speed} .")
@@ -340,14 +340,14 @@ class NormalIP(object):
     def modify_ip(self, conn, device_list, ip, dns=None, gateway=None):
         if not utils.check_ip(ip):
             sys.exit()
-        if gateway is None:
-            gateway = f"{'.'.join(ip.split('.')[:3])}.1"
-        elif not utils.check_ip(gateway):
-            print("Invalid gateway IP format.")
-            sys.exit()
+        # if gateway is None:
+        #     gateway = f"{'.'.join(ip.split('.')[:3])}.1"
+        # elif not utils.check_ip(gateway):
+        #     print("Invalid gateway IP format.")
+        #     sys.exit()
 
-        if dns is None:
-            dns = "'114.114.114.114 8.8.8.8'"
+        # if dns is None:
+        #     dns = "'114.114.114.114 8.8.8.8'"
 
         normal_ip = action.IpService(conn)
         lc_device_data = normal_ip.get_device_status()
@@ -362,15 +362,36 @@ class NormalIP(object):
         ip_detail = normal_ip.get_device_detail(device)
         lc_ip = get_ip(ip_detail)
         lc_DNS = get_dns(ip_detail)
+        lc_DNS = re.search(r"'(.*?)'", str(lc_DNS)).group(1)
         lc_Gateway = get_gateway(ip_detail)
+        b_ip = False
+        b_dns = False
+        b_gateway = False
         if ip == lc_ip:
-            print("Same bonding IP. Do nothing.")
+            print("Same IP.")
         else:
+            b_ip = True
             print(f"Change {device} IP, {lc_ip} -> {ip}.")
-            if dns is not None:
+        if dns is not None:
+            if lc_DNS == dns:
+                print("Same dns.")
+            else:
+                b_dns = True
                 print(f"Change {device} DNS, {lc_DNS} -> {dns}.")
-            if gateway is not None:
+            
+        if gateway is not None:
+            if lc_Gateway == gateway:
+                print("Same gateway.")
+            else:
+                b_gateway = True
                 print(f"Change {device} Gateway, {lc_Gateway} -> {gateway}.")
-            # gateway = f"{'.'.join(ip.split('.')[:3])}.1"
+                # gateway = f"{'.'.join(ip.split('.')[:3])}.1"
+        elif not utils.check_ip(gateway):
+            print("Invalid gateway IP format.")
+            sys.exit()
+
+        if b_ip or b_dns or b_gateway:
             normal_ip.modify_normal_ip(device, ip, gateway, dns)
             normal_ip.up_ip_service(connection_name)
+        else:
+            print("Do nothing.")
