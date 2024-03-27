@@ -33,7 +33,7 @@ class NormalIPCommands(object):
                                    dest='ip',
                                    action='store',
                                    required=True,
-                                   help='Bonding ip')
+                                   help='Normal ip')
         parser_create.add_argument('-dns',
                                    '--dns',
                                    dest='dns',
