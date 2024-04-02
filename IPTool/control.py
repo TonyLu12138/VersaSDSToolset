@@ -57,6 +57,11 @@ def get_gateway(result):
     gateway_obj = re.search(r'IP4.GATEWAY:\s+(\d+\.\d+\.\d+\.\d+)', result)
     if gateway_obj:
         return gateway_obj.group(1)
+    
+def get_netmask(result):
+    netmask_obj = re.search(r'IP4\.ADDRESS\[1\]:\s+\d+\.\d+\.\d+\.\d+\/(\d+)', result)
+    if netmask_obj:
+        return netmask_obj.group(1)
 
 def get_ssh_conn(node, password):
     if utils.get_host_ip() == node or node is None:
@@ -287,24 +292,25 @@ class NormalIP(object):
     def __init__(self):
         pass
 
-    def create_ip(self, conn, device_list, ip, dns=None, gateway=None):
-        
-        print(f"DEBUG: 默认gateway: {gateway}")
+    def create_ip(self, conn, device_list, ip, netmask, dns=None, gateway=None):
+        if netmask == None:
+            netmask = 24
+        # print(f"DEBUG: 默认gateway: {gateway}")
         if not utils.check_ip(ip):
             sys.exit()
         if gateway is None:
             gateway = f"{'.'.join(ip.split('.')[:3])}.1"
-            print(f"DEBUG: 默认gateway修改为: {gateway}")
+            # print(f"DEBUG: 默认gateway修改为: {gateway}")
         elif not utils.check_ip(gateway):
-            print("Invalid gateway IP format.")
+            # print("Invalid gateway IP format.")
             sys.exit()
-        print(f"DEBUG: 实际gateway: {gateway}")
+        # print(f"DEBUG: 实际gateway: {gateway}")
         
-        print(f"DEBUG: 默认DNS: {dns}")
+        # print(f"DEBUG: 默认DNS: {dns}")
         if dns is None:
             dns = "'114.114.114.114 8.8.8.8'"
-            print(f"DEBUG: 默认DNS修改为: {dns}")
-        print(f"DEBUG: 实际DNS: {dns}")
+            # print(f"DEBUG: 默认DNS修改为: {dns}")
+        # print(f"DEBUG: 实际DNS: {dns}")
 
         normal_ip = action.IpService(conn)
         lc_device_data = normal_ip.get_device_status()
@@ -315,7 +321,7 @@ class NormalIP(object):
         connection = get_device_connection(device, connection_detail)
         print(f"Start to set {ip} on the {device}")
         # gateway = f"{'.'.join(ip.split('.')[:3])}.1"
-        normal_ip.set_ip(device, ip, gateway, dns)
+        normal_ip.set_ip(device, ip, gateway, dns, netmask)
         normal_ip.up_ip_service(f'vtel_{device}')
         print(f"Finish to set {ip} on the {device}")
         if connection:
@@ -337,9 +343,11 @@ class NormalIP(object):
             normal_ip.del_connect(connection)
         print(f"Finish to del IP configuration on the {device}")
 
-    def modify_ip(self, conn, device_list, ip, dns=None, gateway=None):
-        if not utils.check_ip(ip):
-            sys.exit()
+    def modify_ip(self, conn, device_list, ip, netmask, dns=None, gateway=None):
+        
+        #if ip:
+        #    if not utils.check_ip(ip):
+        #        sys.exit()
         # if gateway is None:
         #     gateway = f"{'.'.join(ip.split('.')[:3])}.1"
         # elif not utils.check_ip(gateway):
@@ -364,14 +372,35 @@ class NormalIP(object):
         lc_DNS = get_dns(ip_detail)
         lc_DNS = re.search(r"'(.*?)'", str(lc_DNS)).group(1)
         lc_Gateway = get_gateway(ip_detail)
+        lc_netmask = get_netmask(ip_detail)
+
         b_ip = False
         b_dns = False
         b_gateway = False
-        if ip == lc_ip:
-            print("Same IP.")
-        else:
-            b_ip = True
-            print(f"Change {device} IP, {lc_ip} -> {ip}.")
+        b_netmask = False
+        ip_ = ip
+        netmask_ = netmask
+
+        if ip is not None:
+            if not utils.check_ip(ip):
+                sys.exit()
+            if ip == lc_ip:
+                print("Same IP.")
+            else:
+                b_ip = True
+                print(f"Change {device} IP, {lc_ip} -> {ip}.")
+        elif ip is None:
+            ip = lc_ip
+
+        if netmask is not None:
+            if netmask == lc_netmask:
+                print("Same netmask.")
+            else:
+                b_netmask = True
+                print(f"Change {device} Netmask, {lc_netmask} -> {netmask}.")
+        elif netmask == None:
+            netmask = lc_netmask
+
         if dns is not None:
             if lc_DNS == dns:
                 print("Same dns.")
@@ -383,15 +412,17 @@ class NormalIP(object):
             if lc_Gateway == gateway:
                 print("Same gateway.")
             else:
+                if not utils.check_ip(gateway):
+                    print("Invalid gateway IP format.")
+                    sys.exit()
                 b_gateway = True
                 print(f"Change {device} Gateway, {lc_Gateway} -> {gateway}.")
-                # gateway = f"{'.'.join(ip.split('.')[:3])}.1"
-        elif not utils.check_ip(gateway):
-            print("Invalid gateway IP format.")
-            sys.exit()
 
-        if b_ip or b_dns or b_gateway:
-            normal_ip.modify_normal_ip(device, ip, gateway, dns)
+        if b_ip or b_dns or b_gateway or b_netmask:
+            normal_ip.modify_normal_ip(device, ip, netmask, gateway, dns)
             normal_ip.up_ip_service(connection_name)
+        elif not gateway and not dns and not netmask_ and not ip_:
+            print("Please enter at least one content that needs to be modified!")
         else:
-            print("Do nothing.")
+            print("Do nothing.") # 属于都存在，但是是重复的 就是 Do nothing. 
+        
