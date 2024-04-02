@@ -44,6 +44,12 @@ class NormalIPCommands(object):
                                    dest='gateway',
                                    action='store',
                                    help='Gateway value')
+        parser_create.add_argument('-m',
+                                   '--netmask',
+                                   dest='netmask',
+                                   action='store',
+                                   help='Netmask value')
+
 
         parser_delete = subp_ip.add_parser('delete', aliases=['d', 'del'], help='Delete IP')
         # parser_delete.add_argument('-n',
@@ -79,7 +85,6 @@ class NormalIPCommands(object):
                                    '--ip',
                                    dest='ip',
                                    action='store',
-                                   required=True,
                                    help='IP that you want to set')
         parser_modify.add_argument('-d',
                                    '--device',
@@ -98,6 +103,11 @@ class NormalIPCommands(object):
                                    dest='gateway',
                                    action='store',
                                    help='Gateway value')
+        parser_modify.add_argument('-m',
+                                   '--netmask',
+                                   dest='netmask',
+                                   action='store',
+                                   help='Netmask value')
 
         parser_create.set_defaults(func=self.create)
         parser_delete.set_defaults(func=self.delete)
@@ -109,7 +119,7 @@ class NormalIPCommands(object):
         args.password = None
         conn = control.get_ssh_conn(args.node, args.password)
         normal_ip = control.NormalIP()
-        normal_ip.create_ip(conn, args.device, args.ip, args.dns, args.gateway)
+        normal_ip.create_ip(conn, args.device, args.ip, args.netmask, args.dns, args.gateway)
 
     def delete(self, args):
         args.node = None
@@ -123,7 +133,7 @@ class NormalIPCommands(object):
         args.password = None
         conn = control.get_ssh_conn(args.node, args.password)
         normal_ip = control.NormalIP()
-        normal_ip.modify_ip(conn, args.device, args.ip, args.dns, args.gateway)
+        normal_ip.modify_ip(conn, args.device, args.ip, args.dns, args.gateway, args.netmask)
 
     def print_normal_help(self, *args):
         self.parser_normal_ip.print_help()
