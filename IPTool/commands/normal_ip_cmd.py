@@ -50,7 +50,6 @@ class NormalIPCommands(object):
                                    action='store',
                                    help='Netmask value')
 
-
         parser_delete = subp_ip.add_parser('delete', aliases=['d', 'del'], help='Delete IP')
         # parser_delete.add_argument('-n',
         #                            '--node',
@@ -133,7 +132,7 @@ class NormalIPCommands(object):
         args.password = None
         conn = control.get_ssh_conn(args.node, args.password)
         normal_ip = control.NormalIP()
-        normal_ip.modify_ip(conn, args.device, args.ip, args.dns, args.gateway, args.netmask)
+        normal_ip.modify_ip(conn, args.device, args.ip, args.netmask, args.dns, args.gateway)
 
     def print_normal_help(self, *args):
         self.parser_normal_ip.print_help()
