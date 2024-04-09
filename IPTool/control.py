@@ -301,12 +301,12 @@ class NormalIP(object):
         elif isinstance(netmask, str):
             try:
                 netmask = int(netmask)
+                if not 0 <= netmask <= 32:
+                    print("Error: the subnet mask must be an integer from 0 to 32.")
+                    sys.exit()
             except ValueError:
                 print("Error: the subnet mask must be an integer from 0 to 32.")
                 sys.exit()
-        elif not 0 <= netmask <= 32:
-            print("Error: the subnet mask must be an integer from 0 to 32.")
-            sys.exit()
         # print(f"DEBUG: 默认gateway: {gateway}")
         if not utils.check_ip(ip):
             sys.exit()
@@ -322,13 +322,17 @@ class NormalIP(object):
         if dns is None:
             dns = "'114.114.114.114 8.8.8.8'"
         else:
-            dns_list = dns.split()
+            # print(f"DEBUG: 默认DNS修改为: {dns}")
+             # 如果有逗号，则根据逗号分割成列表；如果没有逗号，则直接作为单个元素放入列表中
+            dns_list = dns.split(' ') if ' ' in dns else [dns]
             for dns_ip in dns_list:
                 try:
+                    # print(f"cancan dns_ip: {dns_ip}")
                     ipaddress.ip_address(dns_ip)
                 except ValueError:
-                    print(f"Error: The format of the DNS address '{dns_ip}' is incorrect.")
+                    # print(f"Error: The format of the DNS address '{dns_ip}' is incorrect.")
                     sys.exit()
+            dns = "'"+dns+"'"
             # print(f"DEBUG: 默认DNS修改为: {dns}")
         # print(f"DEBUG: 实际DNS: {dns}")
 
@@ -390,7 +394,7 @@ class NormalIP(object):
         ip_detail = normal_ip.get_device_detail(device)
         lc_ip = get_ip(ip_detail)
         lc_DNS = get_dns(ip_detail)
-        lc_DNS = re.search(r"'(.*?)'", str(lc_DNS)).group(1)
+        # lc_DNS = re.search(r"'(.*?)'", str(lc_DNS)).group(1)
         lc_Gateway = get_gateway(ip_detail)
         lc_netmask = get_netmask(ip_detail)
 
@@ -418,12 +422,12 @@ class NormalIP(object):
             elif isinstance(netmask, str):
                 try:
                     netmask = int(netmask)
+                    if not 0 <= netmask <= 32:
+                        print("Error: the subnet mask must be an integer from 0 to 32.")
+                        sys.exit()
                 except ValueError:
                     print("Error: the subnet mask must be an integer from 0 to 32.")
                     sys.exit()
-            elif not 0 <= netmask <= 32:
-                print("Error: the subnet mask must be an integer from 0 to 32.")
-                sys.exit()
             else:
                 b_netmask = True
                 print(f"Change {device} Netmask, {lc_netmask} -> {netmask}.")
@@ -431,16 +435,24 @@ class NormalIP(object):
             netmask = lc_netmask
 
         if dns is not None:
-            if lc_DNS == dns:
+            lc_DNS = ' '.join(sorted(lc_DNS))
+            dns_ = sorted(dns.split(' '))
+            dns_ = ' '.join(dns_)
+            if lc_DNS == dns_:
                 print("Same dns.")
             else:
-                dns_list = dns.split()
+                # print(f"DEBUG: 默认DNS修改为: {dns}")
+                # 如果有逗号，则根据逗号分割成列表；如果没有逗号，则直接作为单个元素放入列表中
+                dns_list = dns.split(' ') if ' ' in dns else [dns]
                 for dns_ip in dns_list:
                     try:
+                        # print(f"cancan dns_ip: {dns_ip}")
                         ipaddress.ip_address(dns_ip)
                     except ValueError:
                         print(f"Error: The format of the DNS address '{dns_ip}' is incorrect.")
                         sys.exit()
+                dns = "'"+ dns +"'"
+                # print(f"DEBUG: 默认DNS修改为: {dns}")
                 b_dns = True
                 print(f"Change {device} DNS, {lc_DNS} -> {dns}.")
             
