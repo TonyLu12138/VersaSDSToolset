@@ -37,6 +37,7 @@ class NormalIPCommands(object):
         parser_create.add_argument('-dns',
                                    '--dns',
                                    dest='dns',
+                                   nargs='+',
                                    action='store',
                                    help='DNS value')
         parser_create.add_argument('-g',
@@ -95,6 +96,7 @@ class NormalIPCommands(object):
         parser_modify.add_argument('-dns',
                                    '--dns',
                                    dest='dns',
+                                   nargs='+',
                                    action='store',
                                    help='DNS value')
         parser_modify.add_argument('-g',
@@ -116,6 +118,8 @@ class NormalIPCommands(object):
     def create(self, args):
         args.node = None
         args.password = None
+        if args.dns is not None:
+            args.dns = ' '.join(args.dns)
         conn = control.get_ssh_conn(args.node, args.password)
         normal_ip = control.NormalIP()
         normal_ip.create_ip(conn, args.device, args.ip, args.netmask, args.dns, args.gateway)
@@ -130,6 +134,8 @@ class NormalIPCommands(object):
     def modify(self, args):
         args.node = None
         args.password = None
+        if args.dns is not None:
+            args.dns = ' '.join(args.dns)
         conn = control.get_ssh_conn(args.node, args.password)
         normal_ip = control.NormalIP()
         normal_ip.modify_ip(conn, args.device, args.ip, args.netmask, args.dns, args.gateway)
