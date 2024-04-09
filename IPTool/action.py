@@ -12,8 +12,12 @@ class IpService(object):
         result = utils.exec_cmd(cmd, self.conn)
         if result:
             if result["st"]:
+                print(f" Setting the ip of {connection_name} succeeded.")
                 return True
-
+            else:
+                print(f" Setting the ip of {connection_name} failed.")
+        return True
+    
     def get_mode_detail(self, bonding_name):
         cmd = f"cat /proc/net/bonding/{bonding_name}"
         result = utils.exec_cmd(cmd, self.conn)
